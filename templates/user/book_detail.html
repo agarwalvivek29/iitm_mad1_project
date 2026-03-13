@@ -58,7 +58,7 @@
         {% if user_has_access %}
         <hr>
         <h5>{% if user_feedback %}Update Your Review{% else %}Write a Review{% endif %}</h5>
-        <form method="POST" action="{{ url_for('user.submit_feedback', book_id=book.id) }}">
+        <form method="POST" action="{{ url_for('user.submit_feedback', book_id=book.id) }}" class="needs-validation" novalidate>
             <div class="mb-3">
                 <label class="form-label">Rating</label>
                 <select name="rating" class="form-select w-auto" required>
@@ -66,6 +66,7 @@
                     <option value="{{ i }}" {% if user_feedback and user_feedback.rating == i %}selected{% endif %}>{{ i }} / 5</option>
                     {% endfor %}
                 </select>
+                <div class="invalid-feedback">Please select a rating.</div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Comment (optional)</label>
@@ -107,4 +108,22 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  'use strict';
+  const forms = document.querySelectorAll('.needs-validation');
+  forms.forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+})();
+</script>
 {% endblock %}
