@@ -1,42 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Librarian Dashboard — Library{% endblock %}
+{% block title %}Manage Requests — Library{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Librarian Dashboard</h2>
-
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Total Sections</h5>
-                <p class="card-text display-6">{{ total_sections }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-success mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Total Books</h5>
-                <p class="card-text display-6">{{ total_books }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-info mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Active Issues</h5>
-                <p class="card-text display-6">{{ active_issues }}</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="mb-4">
-    <a href="{{ url_for('librarian.sections') }}" class="btn btn-outline-primary me-2">Manage Sections</a>
-    <a href="{{ url_for('librarian.books') }}" class="btn btn-outline-primary me-2">Manage Books</a>
-    <a href="{{ url_for('librarian.manage_requests') }}" class="btn btn-outline-primary me-2">Manage Requests</a>
-</div>
+<h2 class="mb-4">Manage Requests</h2>
 
 <h4>Pending Requests</h4>
 {% if pending_requests %}
@@ -75,7 +42,7 @@
 
 <h4>Active Issues</h4>
 {% if active_issues_list %}
-<div class="table-responsive">
+<div class="table-responsive mb-4">
     <table class="table table-striped">
         <thead>
             <tr>
@@ -110,6 +77,37 @@
     </table>
 </div>
 {% else %}
-<p class="text-muted">No active issues.</p>
+<p class="text-muted mb-4">No active issues.</p>
 {% endif %}
+
+<h4>Issue Book Directly</h4>
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('librarian.issue_book') }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="user_id" class="form-label">User</label>
+                    <select name="user_id" id="user_id" class="form-select" required>
+                        <option value="">Select user</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="book_id" class="form-label">Book</label>
+                    <select name="book_id" id="book_id" class="form-select" required>
+                        <option value="">Select book</option>
+                        {% for b in books %}
+                        <option value="{{ b.id }}">{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Issue Book</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
