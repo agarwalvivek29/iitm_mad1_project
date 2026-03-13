@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Browse — Library{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Browse Library</h2>
+
+<!-- Recently Added Books -->
+{% if recent_books %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Recently Added</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for book in recent_books %}
+            <div class="col-md-4 col-lg mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <a href="{{ url_for('user.book_detail', book_id=book.id) }}">{{ book.name }}</a>
+                        </h6>
+                        <p class="card-text text-muted small mb-1">{{ book.author }}</p>
+                        {% if book.avg_rating > 0 %}
+                        <span class="badge bg-warning text-dark">{{ '%.1f'|format(book.avg_rating) }} / 5</span>
+                        {% else %}
+                        <span class="badge bg-secondary">No ratings</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Sections -->
+<h4 class="mb-3">Sections</h4>
+{% if sections %}
+<div class="row">
+    {% for section in sections %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ section.name }}</h5>
+                {% if section.description %}
+                <p class="card-text text-muted">{{ section.description|truncate(100) }}</p>
+                {% endif %}
+                <p class="card-text"><small class="text-muted">{{ section.books|length }} book{{ 's' if section.books|length != 1 }}</small></p>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('user.section_detail', section_id=section.id) }}" class="btn btn-sm btn-outline-primary">View Section</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-muted">No sections available yet.</p>
+{% endif %}
+{% endblock %}

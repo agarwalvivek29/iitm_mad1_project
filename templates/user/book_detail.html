@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.name }} — Library{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.browse') }}">Browse</a></li>
+        {% if book.section %}
+        <li class="breadcrumb-item"><a href="{{ url_for('user.section_detail', section_id=book.section.id) }}">{{ book.section.name }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">{{ book.name }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <h2>{{ book.name }}</h2>
+        <p class="text-muted mb-1">by <strong>{{ book.author }}</strong></p>
+        {% if book.section %}
+        <p class="text-muted mb-1">Section: <a href="{{ url_for('user.section_detail', section_id=book.section.id) }}">{{ book.section.name }}</a></p>
+        {% endif %}
+        {% if book.num_pages %}
+        <p class="text-muted mb-3">{{ book.num_pages }} pages</p>
+        {% endif %}
+
+        <!-- Content Preview -->
+        {% if book.content %}
+        <div class="card mb-4">
+            <div class="card-header">Preview</div>
+            <div class="card-body">
+                <p class="card-text">{{ book.content[:300] }}{% if book.content|length > 300 %}...{% endif %}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Reviews -->
+        <h4 class="mb-3">Reviews ({{ feedbacks|length }})</h4>
+        {% if feedbacks %}
+            {% for fb in feedbacks %}
+            <div class="card mb-2">
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ fb.user.username }}</strong>
+                        <span class="badge bg-warning text-dark">{{ fb.rating }} / 5</span>
+                    </div>
+                    {% if fb.comment %}
+                    <p class="mb-0 mt-1 small">{{ fb.comment }}</p>
+                    {% endif %}
+                    <small class="text-muted">{{ fb.created_at.strftime('%d %b %Y') }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <p class="text-muted">No reviews yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <!-- Rating -->
+                {% if book.avg_rating > 0 %}
+                <h3 class="mb-1">{{ '%.1f'|format(book.avg_rating) }} <small class="text-muted">/ 5</small></h3>
+                <p class="text-muted">{{ book.feedbacks|length }} review{{ 's' if book.feedbacks|length != 1 }}</p>
+                {% else %}
+                <p class="text-muted mb-2">No ratings yet</p>
+                {% endif %}
+
+                <hr>
+
+                <!-- Request Button -->
+                {% if user_book_status == 'reading' %}
+                <span class="btn btn-success w-100 disabled">Currently Reading</span>
+                {% elif user_book_status == 'requested' %}
+                <span class="btn btn-warning w-100 disabled">Request Pending</span>
+                {% else %}
+                <a href="#" class="btn btn-primary w-100">Request Book</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}{{ section.name }} — Library{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.browse') }}">Browse</a></li>
+        <li class="breadcrumb-item active">{{ section.name }}</li>
+    </ol>
+</nav>
+
+<div class="mb-4">
+    <h2>{{ section.name }}</h2>
+    {% if section.description %}
+    <p class="text-muted">{{ section.description }}</p>
+    {% endif %}
+</div>
+
+{% if books %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Pages</th>
+                <th>Rating</th>
+                <th>Added</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td><a href="{{ url_for('user.book_detail', book_id=book.id) }}">{{ book.name }}</a></td>
+                <td>{{ book.author }}</td>
+                <td>{{ book.num_pages or '—' }}</td>
+                <td>
+                    {% if book.avg_rating > 0 %}
+                    <span class="badge bg-warning text-dark">{{ '%.1f'|format(book.avg_rating) }}</span>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td>{{ book.date_added.strftime('%d %b %Y') }}</td>
+                <td><a href="{{ url_for('user.book_detail', book_id=book.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-muted">No books in this section yet.</p>
+{% endif %}
+{% endblock %}

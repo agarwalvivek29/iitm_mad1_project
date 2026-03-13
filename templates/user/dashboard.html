@@ -8,7 +8,7 @@
         <h2>Welcome, {{ current_user.username }}</h2>
         <p class="text-muted mb-0">Member since {{ current_user.created_at.strftime('%B %Y') }}</p>
     </div>
-    <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Browse Books</a>
+    <a href="{{ url_for('user.browse') }}" class="btn btn-outline-primary">Browse Books</a>
 </div>
 
 <!-- Currently Reading -->
