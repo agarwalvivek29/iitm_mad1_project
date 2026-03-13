@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 
 from app import db
-from models import Section, Book, BookRequest, Feedback
+from models import User, Section, Book, BookRequest, Feedback
 from utils import librarian_required
 
 librarian_bp = Blueprint('librarian', __name__, url_prefix='/librarian')
@@ -28,6 +28,23 @@ def dashboard():
                            active_issues_list=active_issues_list)
 
 
+@librarian_bp.route('/requests')
+@login_required
+@librarian_required
+def manage_requests():
+    pending_requests = BookRequest.query.filter_by(status='pending') \
+        .order_by(BookRequest.date_requested.desc()).all()
+    active_issues_list = BookRequest.query.filter_by(status='approved') \
+        .order_by(BookRequest.date_issued.desc()).all()
+    users = User.query.filter_by(role='user').order_by(User.username).all()
+    all_books = Book.query.order_by(Book.name).all()
+    return render_template('librarian/manage_requests.html',
+                           pending_requests=pending_requests,
+                           active_issues_list=active_issues_list,
+                           users=users,
+                           books=all_books)
+
+
 @librarian_bp.route('/requests/<int:req_id>/approve', methods=['POST'])
 @login_required
 @librarian_required
@@ -35,13 +52,13 @@ def approve_request(req_id):
     req = BookRequest.query.get_or_404(req_id)
     if req.status != 'pending':
         flash('Request is no longer pending.', 'warning')
-        return redirect(url_for('librarian.dashboard'))
+        return redirect(url_for('librarian.manage_requests'))
     req.status = 'approved'
     req.date_issued = datetime.utcnow()
     req.return_date = datetime.utcnow() + timedelta(days=current_app.config['BOOK_LOAN_DAYS'])
     db.session.commit()
     flash('Request approved.', 'success')
-    return redirect(url_for('librarian.dashboard'))
+    return redirect(url_for('librarian.manage_requests'))
 
 
 @librarian_bp.route('/requests/<int:req_id>/reject', methods=['POST'])
@@ -51,11 +68,11 @@ def reject_request(req_id):
     req = BookRequest.query.get_or_404(req_id)
     if req.status != 'pending':
         flash('Request is no longer pending.', 'warning')
-        return redirect(url_for('librarian.dashboard'))
+        return redirect(url_for('librarian.manage_requests'))
     req.status = 'rejected'
     db.session.commit()
     flash('Request rejected.', 'info')
-    return redirect(url_for('librarian.dashboard'))
+    return redirect(url_for('librarian.manage_requests'))
 
 
 @librarian_bp.route('/requests/<int:req_id>/revoke', methods=['POST'])
@@ -65,11 +82,59 @@ def revoke_request(req_id):
     req = BookRequest.query.get_or_404(req_id)
     if req.status != 'approved':
         flash('Only approved issues can be revoked.', 'warning')
-        return redirect(url_for('librarian.dashboard'))
+        return redirect(url_for('librarian.manage_requests'))
     req.status = 'revoked'
     db.session.commit()
     flash('Book access revoked.', 'info')
-    return redirect(url_for('librarian.dashboard'))
+    return redirect(url_for('librarian.manage_requests'))
+
+
+@librarian_bp.route('/issue', methods=['POST'])
+@login_required
+@librarian_required
+def issue_book():
+    user_id = request.form.get('user_id', type=int)
+    book_id = request.form.get('book_id', type=int)
+
+    if not user_id or not book_id:
+        flash('Both user and book are required.', 'danger')
+        return redirect(url_for('librarian.manage_requests'))
+
+    user = User.query.get(user_id)
+    book = Book.query.get(book_id)
+
+    if not user or user.role != 'user':
+        flash('Invalid user.', 'danger')
+        return redirect(url_for('librarian.manage_requests'))
+
+    if not book:
+        flash('Invalid book.', 'danger')
+        return redirect(url_for('librarian.manage_requests'))
+
+    active_for_book = BookRequest.query.filter_by(
+        user_id=user_id, book_id=book_id, status='approved').first()
+    if active_for_book:
+        flash('User already has this book issued.', 'warning')
+        return redirect(url_for('librarian.manage_requests'))
+
+    active_count = BookRequest.query.filter_by(
+        user_id=user_id, status='approved').count()
+    if active_count >= 5:
+        flash('User has reached the 5-book limit.', 'warning')
+        return redirect(url_for('librarian.manage_requests'))
+
+    br = BookRequest(
+        user_id=user_id,
+        book_id=book_id,
+        status='approved',
+        date_requested=datetime.utcnow(),
+        date_issued=datetime.utcnow(),
+        return_date=datetime.utcnow() + timedelta(days=current_app.config['BOOK_LOAN_DAYS']),
+    )
+    db.session.add(br)
+    db.session.commit()
+    flash(f'Book "{book.name}" issued to {user.username}.', 'success')
+    return redirect(url_for('librarian.manage_requests'))
 
 
 @librarian_bp.route('/sections')
