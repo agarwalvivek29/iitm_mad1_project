@@ -2,9 +2,10 @@ from functools import wraps
 
 from flask import Blueprint, jsonify, request, current_app
 from flask_login import current_user
+from sqlalchemy import func
 
 from app import db
-from models import Section, Book, BookRequest, Feedback
+from models import Section, Book, BookRequest, Feedback, User
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -264,3 +265,98 @@ def delete_book(book_id):
     db.session.delete(book)
     db.session.commit()
     return jsonify({'message': 'Book deleted'})
+
+
+# --- Stats API ---
+
+@api_bp.route('/stats/books-per-section', methods=['GET'])
+@api_auth_required
+def books_per_section():
+    rows = (
+        db.session.query(Section.name, func.count(Book.id))
+        .outerjoin(Book, Book.section_id == Section.id)
+        .group_by(Section.id)
+        .order_by(func.count(Book.id).desc())
+        .all()
+    )
+    result = [{'section': name, 'count': count} for name, count in rows]
+
+    unassigned = Book.query.filter_by(section_id=None).count()
+    if unassigned:
+        result.append({'section': 'Unassigned', 'count': unassigned})
+
+    return jsonify(result)
+
+
+@api_bp.route('/stats/top-rated-books', methods=['GET'])
+@api_auth_required
+def top_rated_books():
+    rows = (
+        db.session.query(
+            Book.id, Book.name, Book.author,
+            func.avg(Feedback.rating).label('avg_rating'),
+            func.count(Feedback.id).label('review_count'),
+        )
+        .join(Feedback, Feedback.book_id == Book.id)
+        .group_by(Book.id)
+        .order_by(func.avg(Feedback.rating).desc())
+        .limit(5)
+        .all()
+    )
+    return jsonify([
+        {
+            'id': r.id,
+            'name': r.name,
+            'author': r.author,
+            'avg_rating': round(float(r.avg_rating), 2),
+            'review_count': r.review_count,
+        }
+        for r in rows
+    ])
+
+
+@api_bp.route('/stats/request-status', methods=['GET'])
+@api_auth_required
+def request_status():
+    rows = (
+        db.session.query(BookRequest.status, func.count(BookRequest.id))
+        .group_by(BookRequest.status)
+        .all()
+    )
+    counts = {status: count for status, count in rows}
+    return jsonify({
+        'pending': counts.get('pending', 0),
+        'approved': counts.get('approved', 0),
+        'returned': counts.get('returned', 0),
+        'revoked': counts.get('revoked', 0),
+        'rejected': counts.get('rejected', 0),
+        'expired': counts.get('expired', 0),
+    })
+
+
+@api_bp.route('/stats/active-users', methods=['GET'])
+@api_auth_required
+def active_users():
+    rows = (
+        db.session.query(
+            User.username,
+            func.count(BookRequest.id).label('total_requests'),
+        )
+        .join(BookRequest, BookRequest.user_id == User.id)
+        .group_by(User.id)
+        .order_by(func.count(BookRequest.id).desc())
+        .limit(5)
+        .all()
+    )
+    result = []
+    for r in rows:
+        active = BookRequest.query.filter_by(
+            user_id=User.query.filter_by(username=r.username).first().id,
+            status='approved',
+        ).count()
+        result.append({
+            'username': r.username,
+            'total_requests': r.total_requests,
+            'active_books': active,
+        })
+    return jsonify(result)

@@ -38,6 +38,25 @@
     <a href="{{ url_for('librarian.manage_requests') }}" class="btn btn-outline-primary me-2">Manage Requests</a>
 </div>
 
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Books per Section</h5>
+                <canvas id="booksPerSectionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Request Status</h5>
+                <canvas id="requestStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <h4>Pending Requests</h4>
 {% if pending_requests %}
 <div class="table-responsive mb-4">
@@ -112,4 +131,45 @@
 {% else %}
 <p class="text-muted">No active issues.</p>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const COLORS = ['#0d6efd', '#198754', '#0dcaf0', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14', '#20c997'];
+
+fetch('/api/stats/books-per-section')
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById('booksPerSectionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.section),
+                datasets: [{
+                    data: data.map(d => d.count),
+                    backgroundColor: data.map((_, i) => COLORS[i % COLORS.length]),
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    });
+
+fetch('/api/stats/request-status')
+    .then(r => r.json())
+    .then(data => {
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+        new Chart(document.getElementById('requestStatusChart'), {
+            type: 'pie',
+            data: {
+                labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                datasets: [{
+                    data: values,
+                    backgroundColor: labels.map((_, i) => COLORS[i % COLORS.length]),
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    });
+</script>
 {% endblock %}
