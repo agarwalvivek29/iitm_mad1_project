@@ -6,7 +6,7 @@ from config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.login_view = 'login'
+login_manager.login_view = 'auth.login'
 
 
 def create_app(config_class=Config):
@@ -16,10 +16,11 @@ def create_app(config_class=Config):
     db.init_app(app)
     login_manager.init_app(app)
 
+    from models import User, Section, Book, BookRequest, Feedback
+
     @login_manager.user_loader
     def load_user(user_id):
-        # Will load from User model once models.py exists (issue #2)
-        return None
+        return User.query.get(int(user_id))
 
     @app.route('/')
     def index():
