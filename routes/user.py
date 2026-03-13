@@ -97,10 +97,54 @@ def book_detail(book_id):
     else:
         user_book_status = 'available'
 
+    user_has_access = BookRequest.query.filter(
+        BookRequest.user_id == current_user.id,
+        BookRequest.book_id == book_id,
+        BookRequest.status.in_(['approved', 'returned', 'expired', 'revoked'])
+    ).first() is not None
+    user_feedback = Feedback.query.filter_by(user_id=current_user.id, book_id=book_id).first()
+
     return render_template('user/book_detail.html',
                            book=book,
                            feedbacks=feedbacks,
-                           user_book_status=user_book_status)
+                           user_book_status=user_book_status,
+                           user_has_access=user_has_access,
+                           user_feedback=user_feedback)
+
+
+@user_bp.route('/book/<int:book_id>/feedback', methods=['POST'])
+@login_required
+@user_required
+def submit_feedback(book_id):
+    book = Book.query.get_or_404(book_id)
+
+    has_access = BookRequest.query.filter(
+        BookRequest.user_id == current_user.id,
+        BookRequest.book_id == book_id,
+        BookRequest.status.in_(['approved', 'returned', 'expired', 'revoked'])
+    ).first()
+    if not has_access:
+        flash('You can only review books you have accessed.', 'danger')
+        return redirect(url_for('user.book_detail', book_id=book_id))
+
+    rating = request.form.get('rating', type=int)
+    comment = request.form.get('comment', '').strip()
+
+    if not rating or rating < 1 or rating > 5:
+        flash('Please provide a valid rating (1-5).', 'danger')
+        return redirect(url_for('user.book_detail', book_id=book_id))
+
+    existing = Feedback.query.filter_by(user_id=current_user.id, book_id=book_id).first()
+    if existing:
+        existing.rating = rating
+        existing.comment = comment
+        flash('Your review has been updated.', 'success')
+    else:
+        fb = Feedback(user_id=current_user.id, book_id=book_id, rating=rating, comment=comment)
+        db.session.add(fb)
+        flash('Review submitted!', 'success')
+    db.session.commit()
+    return redirect(url_for('user.book_detail', book_id=book_id))
 
 
 @user_bp.route('/search')

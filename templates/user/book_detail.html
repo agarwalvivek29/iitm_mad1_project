@@ -54,6 +54,26 @@
         {% else %}
         <p class="text-muted">No reviews yet.</p>
         {% endif %}
+
+        {% if user_has_access %}
+        <hr>
+        <h5>{% if user_feedback %}Update Your Review{% else %}Write a Review{% endif %}</h5>
+        <form method="POST" action="{{ url_for('user.submit_feedback', book_id=book.id) }}">
+            <div class="mb-3">
+                <label class="form-label">Rating</label>
+                <select name="rating" class="form-select w-auto" required>
+                    {% for i in range(1, 6) %}
+                    <option value="{{ i }}" {% if user_feedback and user_feedback.rating == i %}selected{% endif %}>{{ i }} / 5</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Comment (optional)</label>
+                <textarea name="comment" class="form-control" rows="3">{{ user_feedback.comment if user_feedback else '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">{% if user_feedback %}Update Review{% else %}Submit Review{% endif %}</button>
+        </form>
+        {% endif %}
     </div>
 
     <div class="col-md-4">
