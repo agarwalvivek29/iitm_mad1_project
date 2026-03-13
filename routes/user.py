@@ -1,14 +1,31 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
-
 from models import Book, BookRequest, Feedback, Section
 from utils import user_required
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
+
+MAX_ACTIVE_BOOKS = 5
+
+
+@user_bp.before_request
+def expire_overdue_books():
+    if not current_user.is_authenticated or current_user.role != 'user':
+        return
+    now = datetime.now(timezone.utc)
+    overdue = BookRequest.query.filter(
+        BookRequest.user_id == current_user.id,
+        BookRequest.status == 'approved',
+        BookRequest.return_date < now
+    ).all()
+    for req in overdue:
+        req.status = 'expired'
+    if overdue:
+        db.session.commit()
 
 
 @user_bp.route('/dashboard')
@@ -115,3 +132,71 @@ def search():
     return render_template('user/search.html', q=q, sections=sections,
                            books=books, all_sections=all_sections,
                            section_filter=section_filter)
+
+
+@user_bp.route('/book/<int:book_id>/request', methods=['POST'])
+@login_required
+@user_required
+def request_book(book_id):
+    book = Book.query.get_or_404(book_id)
+
+    existing = BookRequest.query.filter(
+        BookRequest.user_id == current_user.id,
+        BookRequest.book_id == book_id,
+        BookRequest.status.in_(['pending', 'approved'])
+    ).first()
+    if existing:
+        flash('You already have an active or pending request for this book.', 'warning')
+        return redirect(url_for('user.book_detail', book_id=book_id))
+
+    active_count = BookRequest.query.filter_by(
+        user_id=current_user.id, status='approved'
+    ).count()
+    if active_count >= MAX_ACTIVE_BOOKS:
+        flash(f'You already have {MAX_ACTIVE_BOOKS} active books. Return one before requesting another.', 'warning')
+        return redirect(url_for('user.book_detail', book_id=book_id))
+
+    req = BookRequest(
+        user_id=current_user.id,
+        book_id=book_id,
+        status='pending'
+    )
+    db.session.add(req)
+    db.session.commit()
+    flash(f'Request for "{book.name}" submitted successfully!', 'success')
+    return redirect(url_for('user.book_detail', book_id=book_id))
+
+
+@user_bp.route('/book/<int:book_id>/return', methods=['POST'])
+@login_required
+@user_required
+def return_book(book_id):
+    book = Book.query.get_or_404(book_id)
+
+    req = BookRequest.query.filter_by(
+        user_id=current_user.id, book_id=book_id, status='approved'
+    ).first()
+    if not req:
+        flash('No active issue found for this book.', 'danger')
+        return redirect(url_for('user.dashboard'))
+
+    req.status = 'returned'
+    db.session.commit()
+    flash(f'You have returned "{book.name}".', 'success')
+    return redirect(url_for('user.dashboard'))
+
+
+@user_bp.route('/book/<int:book_id>/read')
+@login_required
+@user_required
+def read_book(book_id):
+    book = Book.query.get_or_404(book_id)
+
+    req = BookRequest.query.filter_by(
+        user_id=current_user.id, book_id=book_id, status='approved'
+    ).first()
+    if not req:
+        flash('You do not have active access to this book.', 'danger')
+        return redirect(url_for('user.book_detail', book_id=book_id))
+
+    return render_template('user/read_book.html', book=book)

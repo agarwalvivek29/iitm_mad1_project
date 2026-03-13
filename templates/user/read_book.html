@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Reading: {{ book.name }} — Library{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('user.book_detail', book_id=book.id) }}">{{ book.name }}</a></li>
+        <li class="breadcrumb-item active">Read</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h2>{{ book.name }}</h2>
+        <p class="text-muted">by <strong>{{ book.author }}</strong></p>
+        <hr>
+
+        <div class="card mb-4">
+            <div class="card-body" style="white-space: pre-wrap; line-height: 1.8;">{{ book.content }}</div>
+        </div>
+
+        <div class="d-flex gap-2 mb-4">
+            <form method="POST" action="{{ url_for('user.return_book', book_id=book.id) }}">
+                <button type="submit" class="btn btn-outline-secondary">Return Book</button>
+            </form>
+            <a href="{{ url_for('user.book_detail', book_id=book.id) }}" class="btn btn-outline-primary">Back to Book Details</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

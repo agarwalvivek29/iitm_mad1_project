@@ -69,13 +69,18 @@
 
                 <hr>
 
-                <!-- Request Button -->
+                <!-- Request / Read / Return Buttons -->
                 {% if user_book_status == 'reading' %}
-                <span class="btn btn-success w-100 disabled">Currently Reading</span>
+                <a href="{{ url_for('user.read_book', book_id=book.id) }}" class="btn btn-success w-100 mb-2">Read Book</a>
+                <form method="POST" action="{{ url_for('user.return_book', book_id=book.id) }}">
+                    <button type="submit" class="btn btn-outline-secondary w-100">Return Book</button>
+                </form>
                 {% elif user_book_status == 'requested' %}
                 <span class="btn btn-warning w-100 disabled">Request Pending</span>
                 {% else %}
-                <a href="#" class="btn btn-primary w-100">Request Book</a>
+                <form method="POST" action="{{ url_for('user.request_book', book_id=book.id) }}">
+                    <button type="submit" class="btn btn-primary w-100">Request Book</button>
+                </form>
                 {% endif %}
             </div>
         </div>

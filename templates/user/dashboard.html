@@ -52,7 +52,10 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-outline-secondary">Return</a>
+                            <a href="{{ url_for('user.read_book', book_id=req.book.id) }}" class="btn btn-sm btn-success me-1">Read</a>
+                            <form method="POST" action="{{ url_for('user.return_book', book_id=req.book.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Return</button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}
