@@ -25,6 +25,7 @@
             <form method="POST" action="{{ url_for('user.return_book', book_id=book.id) }}">
                 <button type="submit" class="btn btn-outline-secondary">Return Book</button>
             </form>
+            <a href="{{ url_for('user.download_book', book_id=book.id) }}" class="btn btn-outline-success">Download PDF</a>
             <a href="{{ url_for('user.book_detail', book_id=book.id) }}" class="btn btn-outline-primary">Back to Book Details</a>
         </div>
     </div>

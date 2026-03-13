@@ -92,6 +92,7 @@
                 <!-- Request / Read / Return Buttons -->
                 {% if user_book_status == 'reading' %}
                 <a href="{{ url_for('user.read_book', book_id=book.id) }}" class="btn btn-success w-100 mb-2">Read Book</a>
+                <a href="{{ url_for('user.download_book', book_id=book.id) }}" class="btn btn-outline-success w-100 mb-2">Download PDF</a>
                 <form method="POST" action="{{ url_for('user.return_book', book_id=book.id) }}">
                     <button type="submit" class="btn btn-outline-secondary w-100">Return Book</button>
                 </form>
