@@ -11,3 +11,4 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     BOOK_LOAN_DAYS = 7
+    API_KEY = os.environ.get('API_KEY', 'dev-api-key')
