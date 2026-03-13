@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 
 from app import db
-from models import Section, Book, BookRequest
+from models import Section, Book, BookRequest, Feedback
 from utils import librarian_required
 
 librarian_bp = Blueprint('librarian', __name__, url_prefix='/librarian')
@@ -14,7 +14,6 @@ librarian_bp = Blueprint('librarian', __name__, url_prefix='/librarian')
 @login_required
 @librarian_required
 def dashboard():
-<<<<<<< HEAD
     total_sections = Section.query.count()
     total_books = Book.query.count()
     active_issues = BookRequest.query.filter_by(status='approved').count()
@@ -162,3 +161,131 @@ def delete_section(section_id):
     db.session.delete(section)
     db.session.commit()
     return redirect(url_for('librarian.sections'))
+
+
+@librarian_bp.route('/books')
+@login_required
+@librarian_required
+def books():
+    section_id = request.args.get('section_id', type=int)
+    query = Book.query
+    if section_id:
+        query = query.filter_by(section_id=section_id)
+    all_books = query.order_by(Book.date_added.desc()).all()
+    all_sections = Section.query.order_by(Section.name).all()
+    return render_template('librarian/books.html', books=all_books,
+                           sections=all_sections, selected_section=section_id)
+
+
+@librarian_bp.route('/books/create', methods=['GET', 'POST'])
+@login_required
+@librarian_required
+def create_book():
+    all_sections = Section.query.order_by(Section.name).all()
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        author = request.form.get('author', '').strip()
+        content = request.form.get('content', '').strip()
+        section_id = request.form.get('section_id', type=int)
+        num_pages = request.form.get('num_pages', '').strip()
+
+        if not name:
+            flash('Book name is required.', 'danger')
+            return render_template('librarian/book_form.html', book=None, sections=all_sections)
+
+        if not author:
+            flash('Author is required.', 'danger')
+            return render_template('librarian/book_form.html', book=None, sections=all_sections)
+
+        if not content:
+            flash('Content is required.', 'danger')
+            return render_template('librarian/book_form.html', book=None, sections=all_sections)
+
+        pages = 0
+        if num_pages:
+            try:
+                pages = int(num_pages)
+                if pages < 0:
+                    flash('Number of pages must be a non-negative integer.', 'danger')
+                    return render_template('librarian/book_form.html', book=None, sections=all_sections)
+            except ValueError:
+                flash('Number of pages must be a non-negative integer.', 'danger')
+                return render_template('librarian/book_form.html', book=None, sections=all_sections)
+
+        if section_id and not Section.query.get(section_id):
+            section_id = None
+
+        book = Book(name=name, author=author, content=content,
+                    num_pages=pages, section_id=section_id)
+        db.session.add(book)
+        db.session.commit()
+        flash('Book created successfully.', 'success')
+        return redirect(url_for('librarian.books'))
+
+    return render_template('librarian/book_form.html', book=None, sections=all_sections)
+
+
+@librarian_bp.route('/books/<int:book_id>/edit', methods=['GET', 'POST'])
+@login_required
+@librarian_required
+def edit_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    all_sections = Section.query.order_by(Section.name).all()
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        author = request.form.get('author', '').strip()
+        content = request.form.get('content', '').strip()
+        section_id = request.form.get('section_id', type=int)
+        num_pages = request.form.get('num_pages', '').strip()
+
+        if not name:
+            flash('Book name is required.', 'danger')
+            return render_template('librarian/book_form.html', book=book, sections=all_sections)
+
+        if not author:
+            flash('Author is required.', 'danger')
+            return render_template('librarian/book_form.html', book=book, sections=all_sections)
+
+        if not content:
+            flash('Content is required.', 'danger')
+            return render_template('librarian/book_form.html', book=book, sections=all_sections)
+
+        pages = 0
+        if num_pages:
+            try:
+                pages = int(num_pages)
+                if pages < 0:
+                    flash('Number of pages must be a non-negative integer.', 'danger')
+                    return render_template('librarian/book_form.html', book=book, sections=all_sections)
+            except ValueError:
+                flash('Number of pages must be a non-negative integer.', 'danger')
+                return render_template('librarian/book_form.html', book=book, sections=all_sections)
+
+        if section_id and not Section.query.get(section_id):
+            section_id = None
+
+        book.name = name
+        book.author = author
+        book.content = content
+        book.num_pages = pages
+        book.section_id = section_id
+        db.session.commit()
+        flash('Book updated successfully.', 'success')
+        return redirect(url_for('librarian.books'))
+
+    return render_template('librarian/book_form.html', book=book, sections=all_sections)
+
+
+@librarian_bp.route('/books/<int:book_id>/delete', methods=['POST'])
+@login_required
+@librarian_required
+def delete_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    Feedback.query.filter_by(book_id=book.id).delete()
+    BookRequest.query.filter_by(book_id=book.id).delete()
+    db.session.delete(book)
+    db.session.commit()
+    flash(f'Book "{book.name}" deleted.', 'success')
+    return redirect(url_for('librarian.books'))
