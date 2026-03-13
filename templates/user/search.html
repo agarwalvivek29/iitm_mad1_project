@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Search — Library{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Search</h2>
+
+<form method="GET" action="{{ url_for('user.search') }}" class="row g-2 mb-4">
+    <div class="col-md-6">
+        <input type="text" name="q" class="form-control" placeholder="Search sections, books, authors…" value="{{ q }}">
+    </div>
+    <div class="col-md-4">
+        <select name="section_id" class="form-select">
+            <option value="">All Sections</option>
+            {% for s in all_sections %}
+            <option value="{{ s.id }}" {% if section_filter == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+</form>
+
+{% if not q %}
+<p class="text-muted">Enter a search term to find sections and books.</p>
+{% else %}
+
+    {% if not sections and not books %}
+    <p class="text-muted">No results found for "{{ q }}".</p>
+    {% endif %}
+
+    {% if sections %}
+    <h4 class="mb-3">Sections ({{ sections|length }})</h4>
+    <div class="row mb-4">
+        {% for section in sections %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ section.name }}</h5>
+                    {% if section.description %}
+                    <p class="card-text text-muted">{{ section.description|truncate(100) }}</p>
+                    {% endif %}
+                    <p class="card-text"><small class="text-muted">{{ section.books|length }} book{{ 's' if section.books|length != 1 }}</small></p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('user.section_detail', section_id=section.id) }}" class="btn btn-sm btn-outline-primary">View Section</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if books %}
+    <h4 class="mb-3">Books ({{ books|length }})</h4>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Section</th>
+                    <th>Rating</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                <tr>
+                    <td>{{ book.name }}</td>
+                    <td>{{ book.author }}</td>
+                    <td>{{ book.section.name if book.section else '—' }}</td>
+                    <td>
+                        {% if book.avg_rating > 0 %}
+                        <span class="badge bg-warning text-dark">{{ '%.1f'|format(book.avg_rating) }} / 5</span>
+                        {% else %}
+                        <span class="badge bg-secondary">No ratings</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('user.book_detail', book_id=book.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+{% endif %}
+{% endblock %}

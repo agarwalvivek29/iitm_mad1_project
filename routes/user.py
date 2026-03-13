@@ -1,7 +1,9 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 from flask_login import current_user, login_required
+
+from app import db
 
 from models import Book, BookRequest, Feedback, Section
 from utils import user_required
@@ -82,3 +84,34 @@ def book_detail(book_id):
                            book=book,
                            feedbacks=feedbacks,
                            user_book_status=user_book_status)
+
+
+@user_bp.route('/search')
+@login_required
+@user_required
+def search():
+    q = request.args.get('q', '').strip()
+    section_filter = request.args.get('section_id', type=int)
+
+    sections = []
+    books = []
+
+    if q:
+        sections = Section.query.filter(
+            Section.name.ilike(f'%{q}%')
+        ).all()
+
+        book_query = Book.query.filter(
+            db.or_(
+                Book.name.ilike(f'%{q}%'),
+                Book.author.ilike(f'%{q}%')
+            )
+        )
+        if section_filter:
+            book_query = book_query.filter_by(section_id=section_filter)
+        books = book_query.all()
+
+    all_sections = Section.query.order_by(Section.name).all()
+    return render_template('user/search.html', q=q, sections=sections,
+                           books=books, all_sections=all_sections,
+                           section_filter=section_filter)
