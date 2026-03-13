@@ -26,13 +26,17 @@ def create_app(config_class=Config):
     def index():
         return render_template('index.html')
 
-    # Blueprints will be registered here in later issues:
-    # from routes.auth import auth_bp
-    # from routes.librarian import librarian_bp
-    # from routes.user import user_bp
+    from routes.auth import auth_bp, seed_admin
+    from routes.user import user_bp
+    from routes.librarian import librarian_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(librarian_bp)
 
     with app.app_context():
         db.create_all()
+        seed_admin()
 
     return app
 

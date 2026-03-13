@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Librarian Login — Library{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-warning">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-2">Librarian Portal</h3>
+                <p class="text-center text-muted mb-4">Authorized staff only</p>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">Login as Librarian</button>
+                </form>
+                <hr>
+                <p class="text-center">
+                    <a href="{{ url_for('auth.login') }}">Back to User Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
