@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Books — Library{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Books</h2>
+    <a href="{{ url_for('librarian.create_book') }}" class="btn btn-primary">Add Book</a>
+</div>
+
+<form method="GET" class="mb-3 d-flex align-items-center gap-2" style="max-width: 400px;">
+    <label for="section_id" class="form-label mb-0 me-2">Section:</label>
+    <select name="section_id" id="section_id" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Sections</option>
+        {% for section in sections %}
+        <option value="{{ section.id }}" {% if selected_section == section.id %}selected{% endif %}>{{ section.name }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+{% if books %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Author</th>
+            <th>Section</th>
+            <th>Pages</th>
+            <th>Date Added</th>
+            <th>Requests</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for book in books %}
+        <tr>
+            <td>{{ book.id }}</td>
+            <td>{{ book.name }}</td>
+            <td>{{ book.author }}</td>
+            <td>{{ book.section.name if book.section else '—' }}</td>
+            <td>{{ book.num_pages }}</td>
+            <td>{{ book.date_added.strftime('%Y-%m-%d') }}</td>
+            <td>{{ book.requests | length }}</td>
+            <td>
+                <a href="{{ url_for('librarian.edit_book', book_id=book.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <form action="{{ url_for('librarian.delete_book', book_id=book.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete book &quot;{{ book.name }}&quot;? All related requests and feedback will also be deleted.');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">No books found. Click "Add Book" to create one.</p>
+{% endif %}
+{% endblock %}

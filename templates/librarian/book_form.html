@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Book' if book else 'Create Book' }} — Library{% endblock %}
+
+{% block content %}
+<h2>{{ 'Edit Book' if book else 'Create Book' }}</h2>
+
+<form method="POST" class="mt-3" style="max-width: 600px;">
+    <div class="mb-3">
+        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="name" name="name" maxlength="200" required
+               value="{{ book.name if book else '' }}">
+    </div>
+    <div class="mb-3">
+        <label for="author" class="form-label">Author <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="author" name="author" maxlength="200" required
+               value="{{ book.author if book else '' }}">
+    </div>
+    <div class="mb-3">
+        <label for="section_id" class="form-label">Section</label>
+        <select class="form-select" id="section_id" name="section_id">
+            <option value="">— No Section —</option>
+            {% for section in sections %}
+            <option value="{{ section.id }}" {% if book and book.section_id == section.id %}selected{% endif %}>{{ section.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="num_pages" class="form-label">Number of Pages</label>
+        <input type="number" class="form-control" id="num_pages" name="num_pages" min="0"
+               value="{{ book.num_pages if book else '' }}">
+    </div>
+    <div class="mb-3">
+        <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+        <textarea class="form-control" id="content" name="content" rows="10" required>{{ book.content if book else '' }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">{{ 'Update' if book else 'Create' }}</button>
+    <a href="{{ url_for('librarian.books') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
