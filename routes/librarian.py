@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 
-from app import db
+from extensions import db
 from models import User, Section, Book, BookRequest, Feedback
 from utils import librarian_required
 

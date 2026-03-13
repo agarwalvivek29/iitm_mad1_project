@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from app import db
+from extensions import db
 from models import Book, BookRequest, Feedback, Section
 from fpdf import FPDF
 from utils import user_required

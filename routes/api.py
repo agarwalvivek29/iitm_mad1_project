@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request, current_app
 from flask_login import current_user
 from sqlalchemy import func
 
-from app import db
+from extensions import db
 from models import Section, Book, BookRequest, Feedback, User
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
