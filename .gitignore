@@ -94,6 +94,10 @@ coverage/
 # Commit agent-orchestrator.yaml.example, never agent-orchestrator.yaml.
 agent-orchestrator.yaml
 
+# ─── Project-specific ─────────────────────────────────────────────────────────
+library.db
+.worktrees/
+
 # ─── Misc ─────────────────────────────────────────────────────────────────────
 *.pid
 *.seed
