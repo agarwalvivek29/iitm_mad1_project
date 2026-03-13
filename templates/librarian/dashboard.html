@@ -3,6 +3,107 @@
 {% block title %}Librarian Dashboard — Library{% endblock %}
 
 {% block content %}
-<h2>Librarian Dashboard</h2>
-<p>Welcome, {{ current_user.username }}! Dashboard coming soon.</p>
+<h2 class="mb-4">Librarian Dashboard</h2>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Sections</h5>
+                <p class="card-text display-6">{{ total_sections }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Books</h5>
+                <p class="card-text display-6">{{ total_books }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Active Issues</h5>
+                <p class="card-text display-6">{{ active_issues }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Pending Requests</h4>
+{% if pending_requests %}
+<div class="table-responsive mb-4">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Book</th>
+                <th>Date Requested</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in pending_requests %}
+            <tr>
+                <td>{{ req.user.username }}</td>
+                <td>{{ req.book.name }}</td>
+                <td>{{ req.date_requested.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('librarian.approve_request', req_id=req.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('librarian.reject_request', req_id=req.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-muted mb-4">No pending requests.</p>
+{% endif %}
+
+<h4>Active Issues</h4>
+{% if active_issues_list %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Book</th>
+                <th>Issue Date</th>
+                <th>Return Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for issue in active_issues_list %}
+            <tr>
+                <td>{{ issue.user.username }}</td>
+                <td>{{ issue.book.name }}</td>
+                <td>{{ issue.date_issued.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    {% if issue.return_date %}
+                        {{ issue.return_date.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('librarian.revoke_request', req_id=issue.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-warning">Revoke</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-muted">No active issues.</p>
+{% endif %}
 {% endblock %}
