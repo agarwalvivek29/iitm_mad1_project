@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
 from models import Book, BookRequest, Feedback, Section
+from fpdf import FPDF
 from utils import user_required
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
@@ -200,3 +201,36 @@ def read_book(book_id):
         return redirect(url_for('user.book_detail', book_id=book_id))
 
     return render_template('user/read_book.html', book=book)
+
+
+@user_bp.route('/book/<int:book_id>/download')
+@login_required
+@user_required
+def download_book(book_id):
+    book = Book.query.get_or_404(book_id)
+
+    req = BookRequest.query.filter_by(
+        user_id=current_user.id, book_id=book_id, status='approved'
+    ).first()
+    if not req:
+        flash('You do not have active access to this book.', 'danger')
+        return redirect(url_for('user.book_detail', book_id=book_id))
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font('Helvetica', 'B', 20)
+    pdf.cell(0, 12, book.name, ln=True, align='C')
+    pdf.set_font('Helvetica', '', 14)
+    pdf.cell(0, 10, f'by {book.author}', ln=True, align='C')
+    pdf.ln(10)
+    pdf.set_font('Helvetica', '', 12)
+    content = book.content or ''
+    pdf.multi_cell(0, 8, content)
+
+    pdf_bytes = pdf.output()
+    filename = f"{book.name.replace(' ', '_')}.pdf"
+    return Response(
+        bytes(pdf_bytes),
+        mimetype='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+    )
