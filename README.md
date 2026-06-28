@@ -1,59 +1,73 @@
-# [Project Name]
+# Library Management System
 
-> Replace this with a one-paragraph description of your project.
+A web-based library management system for issuing and managing e-books. Built with Flask, Jinja2, Bootstrap, and SQLite for the IITM Modern Application Development - I course. Supports two roles: a librarian (admin) who manages sections, books, and access, and general users (students) who browse, request, read, and return e-books.
 
 ---
 
-## What's in This Repository
+## Stack
 
-This is a full-stack monorepo template with built-in guardrails for controlled, spec-driven, agentic development.
-
-```
-apps/          Frontend applications (TypeScript)
-services/      Backend microservices (TypeScript, Python, Go, Rust)
-packages/      Shared libraries and utilities
-infra/         Local dev infrastructure (docker-compose) and AWS guidance
-docs/          Specs, ADRs, and conventions
-scripts/       Scaffold and utility scripts
-```
+| Layer | Technology |
+|---|---|
+| Backend | Python + Flask |
+| Templates | Jinja2 + Bootstrap |
+| Database | SQLite (Flask-SQLAlchemy) |
+| Auth | Flask-Login (session-based) |
 
 ---
 
 ## Getting Started
 
-See [docs/ONBOARDING.md](docs/ONBOARDING.md) for the full setup guide.
-
-**Quick start:**
-
 ```bash
-# 1. Make scripts executable
-chmod +x scripts/*.sh
+# 1. Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-# 2. Install git hooks
-npm install
+# 2. Install dependencies
+pip install -r requirements.txt
 
-# 3. Create your first service
-./scripts/new-service.sh
-
-# 4. Start local infrastructure
-docker compose -f infra/docker-compose.yml up -d
+# 3. Run the app
+python app.py
 ```
 
-**Using agent orchestrator (ao):**
+The app will be available at `http://localhost:5000`.
 
-```bash
-# Configure ao for this project
-cp agent-orchestrator.yaml.example agent-orchestrator.yaml
-# Fill in repo and path, then:
+---
 
-ao init                              # install workspace hooks
-ao start                             # launch dashboard + lifecycle manager
-ao spawn my-project #42              # spawn an agent on a GitHub Issue
-ao batch-spawn my-project #42 #43    # spawn agents in parallel
-ao status                            # watch all sessions
+## Project Structure
+
+```
+app.py              # Flask app entry point + routes
+models.py           # SQLAlchemy models
+templates/          # Jinja2 templates (Bootstrap)
+  base.html
+  auth/
+  librarian/
+  user/
+static/
+  css/
+requirements.txt
+library.db          # SQLite database (auto-created, gitignored)
 ```
 
-See [docs/ONBOARDING.md](docs/ONBOARDING.md#step-8-set-up-agent-orchestrator-ao--recommended) for full ao setup.
+---
+
+## Features
+
+**Librarian:**
+- Dashboard with library stats
+- CRUD for sections and books
+- Approve/reject book requests
+- Revoke book access
+- Monitor issued books
+
+**User:**
+- Register/login
+- Browse sections and books
+- Request books (max 5 active)
+- Read book content
+- Return books (auto-revoke after 7 days)
+- Rate and review books
+- Search by section, book name, author
 
 ---
 
@@ -62,16 +76,7 @@ See [docs/ONBOARDING.md](docs/ONBOARDING.md#step-8-set-up-agent-orchestrator-ao-
 All contributors (human and AI) follow the same rules:
 
 - **[Core Rules](docs/CORE_RULES.md)** — The binding rules for this repository
-- **[Conventions](docs/CONVENTIONS.md)** — Language-specific coding standards
-- **[ADR Process](docs/adr/README.md)** — How architectural decisions are made and recorded
-
-**The short version:**
-1. Open a GitHub Issue before starting any work
-2. Write a spec in `docs/specs/` before writing any feature code
-3. Create an ADR before making architectural decisions
-4. Get a plan approved before implementing non-trivial changes
-5. All commits follow [Conventional Commits](https://www.conventionalcommits.org/)
-6. All changes go through a PR — no direct pushes to `main`
+- **[Conventions](docs/CONVENTIONS.md)** — Coding standards
 
 ---
 
@@ -79,37 +84,3 @@ All contributors (human and AI) follow the same rules:
 
 - **Claude Code**: Read [CLAUDE.md](CLAUDE.md) first
 - **Other AI tools**: Read [AGENTS.md](AGENTS.md) first
-- **Working in a service**: Read `services/[name]/AGENTS.md` before touching any code
-
----
-
-## Architecture
-
-Key architectural decisions are recorded in [docs/adr/](docs/adr/).
-
-| ADR | Decision | Status |
-|---|---|---|
-| [0001](docs/adr/0001-monorepo-structure.md) | Monorepo with per-service isolation | Accepted |
-
----
-
-## Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | TypeScript, [framework] |
-| Backend | TypeScript / Python / Go / Rust |
-| Database | PostgreSQL, MongoDB, Redis |
-| Queues | Kafka, RabbitMQ, Redis |
-| Infra | AWS, Docker Compose |
-
----
-
-## Contributing
-
-1. Find or create a GitHub Issue
-2. Write a spec: `docs/specs/[ISSUE-NUMBER]-[name].md`
-3. Create an ADR if needed
-4. Branch: `git checkout -b feat/[ISSUE-NUMBER]-[desc]`
-5. Implement following [docs/CONVENTIONS.md](docs/CONVENTIONS.md)
-6. Open a PR using the PR template
